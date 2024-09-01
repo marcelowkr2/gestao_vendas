@@ -10,30 +10,40 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-
 public class ClienteController implements ActionListener {
 
+    // Atributos que representam o painel principal, o DAO de cliente e o modelo da tabela de clientes.
     private Dashboard dashboard;
     private ClienteDao clienteDao;
     private ClienteTableModel clienteTableModel;
 
+    // Construtor que inicializa o painel e o DAO, e atualiza a tabela de clientes.
     public ClienteController(Dashboard dashboard) {
         this.dashboard = dashboard;
         this.clienteDao = new ClienteDao();
         actualizarTabelaCliente();
     }
 
+    // Implementação do método actionPerformed para tratar eventos de ação (cliques em botões).
     @Override
     public void actionPerformed(ActionEvent ae) {
         String accao = ae.getActionCommand().toLowerCase();
 
-        switch(accao) {
-            case "adicionar": adicionar(); break;
-            case "salvar": salvar(); break;
-            case "cancelar": cancelar();break;
+        // Verifica qual ação foi executada e chama o método correspondente.
+        switch (accao) {
+            case "adicionar":
+                adicionar();
+                break;
+            case "salvar":
+                salvar();
+                break;
+            case "cancelar":
+                cancelar();
+                break;
         }
     }
 
+    // Método para salvar ou atualizar as informações de um cliente.
     public void salvar() {
         String idString = this.dashboard.getTxtClienteId().getText();
         String nome = this.dashboard.getTxtClienteNome().getText();
@@ -42,49 +52,25 @@ public class ClienteController implements ActionListener {
 
         Long id = Long.valueOf(idString);
 
+        // Cria um objeto Cliente com os valores do formulário.
         Cliente cliente = new Cliente(id, nome, telefone, endereco);
         String mensagem = clienteDao.salvar(cliente);
 
-        if(mensagem.startsWith("Cliente")) {
+        // Exibe uma mensagem na tela dependendo do sucesso da operação.
+        if (mensagem.startsWith("Cliente")) {
             mensagemNaTela(mensagem, Color.GREEN);
             actualizarTabelaCliente();
-        }else {
+        } else {
             mensagemNaTela(mensagem, Color.RED);
         }
     }
 
+    // Método para exibir mensagens na tela com a cor especificada.
     private void mensagemNaTela(String mensagem, Color color) {
         this.dashboard.getLabelClienteMensagem().setBackground(color);
         this.dashboard.getLabelClienteMensagem().setText(mensagem);
     }
 
+    // Método para cancelar a operação e fechar o diálogo de cliente.
     private void cancelar() {
-        limpar();
-        this.dashboard.getDialogCliente().setVisible(false);
-    }
-
-    private void limpar() {
-        this.dashboard.getTxtClienteId().setText("0");
-        this.dashboard.getTxtClienteNome().setText("");
-        this.dashboard.getTxtClienteTelefone().setText("");
-        this.dashboard.getTxtClienteEndereco().setText("");
-    }
-
-    private void mostrarTela() {
-        this.dashboard.getDialogCliente().pack();
-        this.dashboard.getDialogCliente().setLocationRelativeTo(dashboard);
-        this.dashboard.getDialogCliente().setVisible(true);
-    }
-
-    private void adicionar() {
-        mostrarTela();
-    }
-
-    private void actualizarTabelaCliente() {
-        List<Cliente> clientes = clienteDao.todosCliente();
-        this.clienteTableModel = new ClienteTableModel(clientes);
-        this.dashboard.getTabelaCliente().setModel(clienteTableModel);
-        this.dashboard.getLabelHomeCliente().setText(String.format("%d", clientes.size()));
-    }
-}
-
+        limp
