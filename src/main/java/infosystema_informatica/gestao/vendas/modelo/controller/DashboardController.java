@@ -11,34 +11,50 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
- *
- * @author marcelo
+ * Controlador para gerenciar as interações no painel de controle (Dashboard).
  */
-public final class DashboardController implements ActionListener{
+public final class DashboardController implements ActionListener {
 
+    // Atributos que representam o painel principal (Dashboard) e o DAO de usuários.
     private final Dashboard dashboard;
     private final UsuarioDao usuarioDao;
     private UsuarioTableModel usuarioTableModel;
 
+    // Construtor que inicializa o Dashboard e o DAO de usuário.
     public DashboardController(Dashboard dashboard) {
         this.dashboard = dashboard;
         this.usuarioDao = new UsuarioDao();
     }
 
+    // Implementação do método actionPerformed para tratar eventos de ação (cliques em botões).
     @Override
     public void actionPerformed(ActionEvent ae) {
         String accao = ae.getActionCommand().toLowerCase();
 
-        switch(accao) {
-            case "home": panelHome(); break;
-            case "clientes": panelClientes(); break;
-            case "produtos": panelProdutos(); break;
-            case "vendas": panelVendas(); break;
-            case "usuarios": panelUsuarios(); break;
-            case "sair": sair(); break;
+        // Verifica qual ação foi executada e chama o método correspondente.
+        switch (accao) {
+            case "home":
+                panelHome();
+                break;
+            case "clientes":
+                panelClientes();
+                break;
+            case "produtos":
+                panelProdutos();
+                break;
+            case "vendas":
+                panelVendas();
+                break;
+            case "usuarios":
+                panelUsuarios();
+                break;
+            case "sair":
+                sair();
+                break;
         }
     }
 
+    // Método para alterar o painel visível no painel principal (Dashboard).
     private void painelComponentes(JPanel panel) {
         this.dashboard.getPanelBody().removeAll();
         this.dashboard.getPanelBody().repaint();
@@ -48,30 +64,35 @@ public final class DashboardController implements ActionListener{
         this.dashboard.getPanelBody().revalidate();
     }
 
+    // Método para exibir o painel de clientes.
     private void panelClientes() {
         painelComponentes(this.dashboard.getPanelCliente());
     }
 
+    // Método para exibir o painel de produtos.
     private void panelProdutos() {
         painelComponentes(this.dashboard.getPanelProduto());
     }
 
+    // Método para exibir um diálogo de confirmação e sair do sistema se confirmado.
     private void sair() {
-        int confirma = JOptionPane.showConfirmDialog(null, "Tens certeza que desejas sair?","Sair do login", JOptionPane.YES_NO_OPTION);
+        int confirma = JOptionPane.showConfirmDialog(null, "Tens certeza que desejas sair?", "Sair do login", JOptionPane.YES_NO_OPTION);
 
-        if(confirma == JOptionPane.YES_OPTION) System.exit(0);
+        if (confirma == JOptionPane.YES_OPTION) System.exit(0);
     }
 
+    // Método para exibir o painel de usuários.
     private void panelUsuarios() {
         painelComponentes(this.dashboard.getPanelUsuario());
     }
 
+    // Método para exibir o painel de vendas.
     private void panelVendas() {
         painelComponentes(this.dashboard.getPanelVenda());
     }
 
+    // Método para exibir o painel inicial (Home).
     private void panelHome() {
         painelComponentes(this.dashboard.getPanelHome());
     }
-
 }
