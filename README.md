@@ -1,5 +1,3 @@
-<h2>CRIAÇÃO DE UM SOFTWARE DE GESTÃO DE VENDAS</h2>
-
 # Sistema de Gestão de Vendas
 
 Este projeto é um sistema de gestão de vendas desenvolvido em Java. Ele permite o gerenciamento de produtos, categorias, clientes, e vendas, incluindo funcionalidades para adicionar produtos ao cesto, aplicar descontos, e processar transações de vendas.
