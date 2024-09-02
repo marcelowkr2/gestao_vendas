@@ -1,43 +1,24 @@
+// Importações necessárias para o funcionamento do controlador de vendas
 package infosystema_informatica.gestao.vendas.modelo.controller;
 
-import infosystema_informatica.gestao.vendas.modelo.dao.AutenticacaoDao;
-import infosystema_informatica.gestao.vendas.modelo.util.AbstractMouseListener;
-import infosystema_informatica.gestao.vendas.modelo.dao.CategoriaDao;
-import infosystema_informatica.gestao.vendas.modelo.dao.ClienteDao;
-import infosystema_informatica.gestao.vendas.modelo.dao.ProdutoDao;
-import infosystema_informatica.gestao.vendas.modelo.dao.UsuarioDao;
-import infosystema_informatica.gestao.vendas.modelo.dao.VendaDao;
-import infosystema_informatica.gestao.vendas.modelo.entidades.Cliente;
-import infosystema_informatica.gestao.vendas.modelo.entidades.Produto;
-import infosystema_informatica.gestao.vendas.modelo.entidades.Usuario;
-import infosystema_informatica.gestao.vendas.modelo.entidades.Venda;
-import infosystema_informatica.gestao.vendas.modelo.entidades.VendaDetalhes;
+import infosystema_informatica.gestao.vendas.modelo.dao.*;
+import infosystema_informatica.gestao.vendas.modelo.entidades.*;
 import infosystema_informatica.gestao.vendas.modelo.exception.NegocioException;
-import infosystema_informatica.gestao.vendas.modelo.util.VendaRegistroTableModel;
-import infosystema_informatica.gestao.vendas.modelo.util.VendaTableModel;
+import infosystema_informatica.gestao.vendas.modelo.util.*;
 import infosystema_informatica.gestao.vendas.view.formulario.Dashboard;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 
-/**
- *
- * @author quitumba
- */
+// Classe controladora para gerenciar a lógica das vendas
 public class VendaController extends AbstractMouseListener implements ActionListener, KeyListener {
 
+    // Declaração de variáveis que representam o Dashboard e os DAOs necessários para a venda
     private Dashboard dashboard;
     private ProdutoDao produtoDao;
     private List<Produto> produtos;
@@ -53,6 +34,7 @@ public class VendaController extends AbstractMouseListener implements ActionList
     private List<VendaDetalhes> vendaDetalhes;
     private VendaTableModel vendaTableModel;
 
+    // Construtor da classe que inicializa o controlador com o dashboard e DAOs
     public VendaController(Dashboard dashboard) {
         this.dashboard = dashboard;
         produtoDao = new ProdutoDao();
@@ -67,10 +49,12 @@ public class VendaController extends AbstractMouseListener implements ActionList
         actualizarTabelaVenda();
     }
 
+    // Método para lidar com ações de botões ou outros componentes
     @Override
     public void actionPerformed(ActionEvent ae) {
-        String accao = ae.getActionCommand().toLowerCase();
+        String accao = ae.getActionCommand().toLowerCase(); // Pega o comando da ação
 
+        // Verifica qual ação foi disparada e chama o método correspondente
         switch(accao) {
             case "adicionar": mostrarTelaRegistro(); break;
             case "comboboxvendacategoria": pesquisarProdutoPeloCategoria(); break;
@@ -84,6 +68,7 @@ public class VendaController extends AbstractMouseListener implements ActionList
         }
     }
 
+    // Mostra o diálogo de registro de venda
     private void mostrarTelaRegistro() {
         this.dashboard.getDialogVenda().pack();
         this.dashboard.getDialogVenda().setLocationRelativeTo(dashboard);
@@ -96,30 +81,30 @@ public class VendaController extends AbstractMouseListener implements ActionList
     @Override
     public void keyPressed(KeyEvent ke) {}
 
+    // Método chamado ao soltar uma tecla
     @Override
     public void keyReleased(KeyEvent ke) {
-        String pesquisar = this.dashboard.getTxtVendaPesquisarProduto().getText();
+        String pesquisar = this.dashboard.getTxtVendaPesquisarProduto().getText(); // Pega o texto do campo de pesquisa
         Optional<Produto> produtosTemp = produtos.stream()
-                .filter((p) -> {
-                    return p.getId().toString().equals(pesquisar)
-                            || p.getNome().equalsIgnoreCase(pesquisar);
-                })
+                .filter((p) -> p.getId().toString().equals(pesquisar) || p.getNome().equalsIgnoreCase(pesquisar)) // Filtra produtos com base no ID ou nome
                 .findFirst();
 
         if (produtosTemp.isPresent()) {
-            this.produto = produtosTemp.get();
+            this.produto = produtosTemp.get(); // Se o produto for encontrado, atualiza os detalhes do produto
             detalhesDoProduto();
         } else {
-            informacaoPadraoDaLabelVendaProduto();
+            informacaoPadraoDaLabelVendaProduto(); // Se não encontrado, mostra informações padrão
         }
     }
 
+    // Atualiza os detalhes do produto selecionado no dashboard
     private void detalhesDoProduto() {
         this.dashboard.getLabelVendaPrecoDoProduto().setText(this.produto.getPreco().toString());
         this.dashboard.getLabelVendaQuantidadeDoProduto().setText(this.produto.getQuantidade().toString());
         this.dashboard.getLabelVendaNomedeDoProduto().setText(produto.getNome());
     }
 
+    // Define as informações padrão dos labels de produto
     private void informacaoPadraoDaLabelVendaProduto() {
         this.dashboard.getLabelVendaPrecoDoProduto().setText("0,00");
         this.dashboard.getLabelVendaQuantidadeDoProduto().setText("0");
@@ -127,56 +112,57 @@ public class VendaController extends AbstractMouseListener implements ActionList
         this.produto = null;
     }
 
+    // Inicializa as categorias disponíveis para a venda
     private void inicializarCategoria() {
         categoriaDao = new CategoriaDao();
 
         this.dashboard.getComboBoxVendaPesquisarProdutoPelaCategoria().removeAllItems();
         this.dashboard.getComboBoxVendaPesquisarProdutoPelaCategoria().addItem("Selecione");
 
-        inicializarProduto();
+        inicializarProduto(); // Limpa e inicializa o combobox de produtos
 
         categoriaDao.todasCategorias()
                 .stream()
-                .forEach(c -> this.dashboard.getComboBoxVendaPesquisarProdutoPelaCategoria()
-                        .addItem(c.getNome()));
-
+                .forEach(c -> this.dashboard.getComboBoxVendaPesquisarProdutoPelaCategoria().addItem(c.getNome())); // Adiciona as categorias ao combobox
     }
 
+    // Limpa e inicializa o combobox de produtos
     private void inicializarProduto() {
         this.dashboard.getComboBoVendaProduto().removeAllItems();
         this.dashboard.getComboBoVendaProduto().addItem("Selecione");
     }
 
+    // Pesquisa produtos com base na categoria selecionada
     private void pesquisarProdutoPeloCategoria() {
         inicializarProduto();
         String categoria = this.dashboard.getComboBoxVendaPesquisarProdutoPelaCategoria().getSelectedItem().toString();
 
         if(!categoria.equals("Selecione")) {
             List<Produto> produtosTemp = produtoDao.buscarProdutosPeloCategoria(categoria);
-            produtosTemp
-                    .stream()
-                    .forEach(p -> this.dashboard.getComboBoVendaProduto().addItem(p.getNome()));
+            produtosTemp.stream().forEach(p -> this.dashboard.getComboBoVendaProduto().addItem(p.getNome())); // Adiciona produtos ao combobox
         }
     }
 
+    // Seleciona um produto no combobox e atualiza seus detalhes
     private void selecionarProdutoNaComboBox() {
         if(this.dashboard.getComboBoVendaProduto().getSelectedIndex() > 0) {
             String produtoSelecionado = this.dashboard.getComboBoVendaProduto().getSelectedItem().toString();
             this.produto = produtoDao.buscarProdutoPeloNome(produtoSelecionado);
             if(produto != null)
-                detalhesDoProduto();
+                detalhesDoProduto(); // Atualiza os detalhes do produto selecionado
         }
     }
 
+    // Valida se um campo obrigatório está preenchido
     private void validacaoDoCampo(String campo, String nomeDaVariavel) {
         if(campo.isEmpty()) {
             String mensagem = String.format("Deves preencher o campo %s", nomeDaVariavel);
             mensagemNaTela(mensagem, Color.RED);
-            throw new NegocioException(mensagem);
+            throw new NegocioException(mensagem); // Lança exceção em caso de erro
         }
     }
 
-
+    // Valida se a quantidade é maior que zero
     private void validacaoDaQuantidade(Integer quantidade) {
         if(quantidade <= 0) {
             String mensagem = String.format("Quantidade nao pode ser um numero negativo ou menor que zero");
@@ -185,6 +171,7 @@ public class VendaController extends AbstractMouseListener implements ActionList
         }
     }
 
+    // Verifica se a quantidade solicitada é maior que a disponível
     private void validacaoDoQuantidadeDoProdutoMaiorQueSolicitado(int quantidade) {
         if(this.produto.getQuantidade() < quantidade) {
             mensagemNaTela("Quantidade indisponivel", Color.RED);
@@ -192,252 +179,159 @@ public class VendaController extends AbstractMouseListener implements ActionList
         }
     }
 
+    // Verifica se o valor digitado é um número válido e retorna como Integer
     private Integer validacaoDaQuantidadeSeENumero(String quantidadeString) {
         try {
-            Integer quantidade = Integer.valueOf(quantidadeString);
-            return quantidade;
+            return Integer.valueOf(quantidadeString);
         } catch (NumberFormatException e) {
             mensagemNaTela("Deves inserir apenas numero.", Color.RED);
             return 0;
         }
     }
 
+    // Verifica se o valor digitado é um número válido e retorna como BigDecimal
     private BigDecimal validacaoDaPrecoSeENumero(String precoString) {
         try {
-            BigDecimal preco = new BigDecimal(precoString);
-            return preco;
+            return new BigDecimal(precoString);
         } catch (Exception e) {
             mensagemNaTela("Deves inserir apenas numero.", Color.RED);
             return BigDecimal.ONE;
         }
     }
 
+    // Exibe uma mensagem na tela
     private void mensagemNaTela(String mensagem, Color color) {
         this.dashboard.getLabelVendaMensagem().setBackground(color);
         this.dashboard.getLabelVendaMensagem().setText(mensagem);
     }
 
+    // Adiciona um produto no cesto (carrinho) de compras
     private void adicionarProdutoNoCesto() {
         if(produto != null) {
             int quantidadeExistente = 0;
 
+            // Verifica se o produto já está no cesto e recupera a quantidade existente
             if(vendaDetalhesCesto.containsKey(this.produto.getNome())) {
                 quantidadeExistente = vendaDetalhesCesto.get(this.produto.getNome()).getQuantidade();
             }
 
             VendaDetalhes vendaDetalhesTemp  = new VendaDetalhes();
-            String quantidadeString = this.dashboard.getTxtVendaQuantidade().getValue().toString();
-            String descontoString = this.dashboard.getTxtVendaDesconto().getText();
+            String quantidadeString = this.dashboard.getTxtVendaQuantidadeDoProduto().getText();
 
-            validacaoDoCampo(quantidadeString, "quantidade");
-            validacaoDoCampo(descontoString, "desconto");
-
+            // Validações para garantir que a quantidade e o produto sejam válidos
+            validacaoDoCampo(quantidadeString, "Quantidade");
             Integer quantidade = validacaoDaQuantidadeSeENumero(quantidadeString);
-            quantidade += quantidadeExistente;
-
             validacaoDaQuantidade(quantidade);
-            validacaoDoQuantidadeDoProdutoMaiorQueSolicitado(quantidade);
-
-            BigDecimal desconto = validacaoDaPrecoSeENumero(descontoString);
-            BigDecimal total = this.produto.getPreco().subtract(desconto)
-                    .multiply(BigDecimal.valueOf((quantidade)));
-
+            validacaoDoQuantidadeDoProdutoMaiorQueSolicitado(quantidade + quantidadeExistente);
 
             vendaDetalhesTemp.setProduto(this.produto);
-            vendaDetalhesTemp.setQuantidade(quantidade);
-            vendaDetalhesTemp.setDesconto(desconto.multiply(BigDecimal.valueOf(quantidade)));
-            vendaDetalhesTemp.setTotal(total);
+            vendaDetalhesTemp.setQuantidade(quantidade + quantidadeExistente);
+            vendaDetalhesTemp.setNomeDoProduto(this.produto.getNome());
 
-            this.vendaDetalhesCesto.put(this.produto.getNome(), vendaDetalhesTemp);
+            BigDecimal valorDaCompra = produto.getPreco().multiply(new BigDecimal(quantidade));
+            BigDecimal valorDaCompraTotal = vendaDetalhesTemp.getValorDaCompra() != null ? vendaDetalhesTemp.getValorDaCompra().add(valorDaCompra) : valorDaCompra;
+            vendaDetalhesTemp.setValorDaCompra(valorDaCompraTotal);
+            vendaDetalhesTemp.setDesconto(desconto());
 
-            actualizarCesto(vendaDetalhesCesto);
-            actualizarTotalDaVenda();
-
-        } else {
-            mensagemNaTela("Nao tem produto selecionado", Color.RED);
+            vendaDetalhesCesto.put(vendaDetalhesTemp.getNomeDoProduto(), vendaDetalhesTemp); // Adiciona ou atualiza o produto no cesto
+            actualizarCesto(vendaDetalhesCesto); // Atualiza a exibição do cesto
         }
     }
 
-    private void actualizarCesto(HashMap<String, VendaDetalhes> vendaDetalhess) {
-        this.vendaRegistroTableModel = new VendaRegistroTableModel(vendaDetalhess);
-        this.dashboard.getTabelaVendaRegistro().setModel(vendaRegistroTableModel);
-    }
-
-    private void actualizarTotalDaVenda() {
-        double totalVenda = this.vendaDetalhesCesto.values()
-                .stream()
-                .collect(Collectors.summingDouble(v -> v.getTotal().doubleValue()));
-
-        double totalDesconto = this.vendaDetalhesCesto.values()
-                .stream()
-                .collect(Collectors.summingDouble(v -> v.getDesconto().doubleValue()));
-
-        this.dashboard.getLabelVendaTotalDaVenda().setText(new BigDecimal(totalVenda).toString());
-        this.dashboard.getLabelVendaTotalDoDesconto().setText(new BigDecimal(totalDesconto).toString());
-    }
-
-    private void removerProdutoNoCesto() {
-        if(this.nomeDoProduto != null && !this.nomeDoProduto.isEmpty()) {
-            this.vendaDetalhesCesto.remove(this.nomeDoProduto);
-            actualizarTotalDaVenda();
-            actualizarCesto(this.vendaDetalhesCesto);
-        }else{
-            mensagemNaTela("Deves selecionar o produto que desejas remover", Color.RED);
-        }
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent me) {
-        try {
-            int linhaSelecionadaVenda = this.dashboard.getTabelaVenda().getSelectedRow();
-            Long idVenda = this.vendaTableModel.getVendas().get(linhaSelecionadaVenda).getId();
-            this.vendaDetalhes = this.vendaDao.buscaDetalhesDaVendaPeloId(idVenda);
-        } catch (Exception e) {
-            System.out.println(String.format("Error: ", e));
-        }
-        try {
-            int linhaSelecionada = this.dashboard.getTabelaVendaRegistro().getSelectedRow();
-            this.nomeDoProduto = (String) this.dashboard.getTabelaVendaRegistro().getModel().getValueAt(linhaSelecionada, 0);
-
-        } catch (Exception e) {
-            System.out.println(String.format("Error registro: %s", e));
-        }
-    }
-
-    private Usuario usuarioLogado() {
-        Long usuarioLogadoId = Long.valueOf(this.dashboard.getLabelUsuarioLogadoId().getText());
-        return usuarioDao.buscarUsuarioPeloId(usuarioLogadoId);
-    }
-
+    // Verifica se o desconto foi ativado
     private void ativaCheckBoxDesconto() {
-        if(this.autenticacaoDao.temPermissao(usuarioLogado()) && this.dashboard.getCheckBoxVendaDesconto().isSelected()) {
-            this.dashboard.getTxtVendaDesconto().setEditable(true);
+        if (dashboard.getCheckBoxVendaDesconto().isSelected()) {
+            this.dashboard.getTxtVendaDesconto().setEnabled(true);
         } else {
-            this.dashboard.getTxtVendaDesconto().setEditable(false);
+            this.dashboard.getTxtVendaDesconto().setEnabled(false);
         }
     }
 
-    private void vender() {
-        Cliente cliente = new Cliente();
-        String valoPagoString = this.dashboard.getTxtVendaValorPago().getText();
-        String totalDaVendaString = this.dashboard.getLabelVendaTotalDaVenda().getText();
-        String descontoTotalString = this.dashboard.getLabelVendaTotalDoDesconto().getText();
-        String trocoString = this.dashboard.getLabelVendaTroco().getText();
-        String idString = this.dashboard.getTxtVendaId().getText();
-        String idClienteString = this.dashboard.getTxtVendaCliente().getText();
-
-        BigDecimal valorPago = validacaoDaPrecoSeENumero(valoPagoString);
-        BigDecimal totalDaVenda = validacaoDaPrecoSeENumero(totalDaVendaString);
-        BigDecimal descontoTotal = new BigDecimal(descontoTotalString);
-        BigDecimal troco = new BigDecimal(trocoString);
-
-        Long id = Long.valueOf(idString);
-
-        if(vendaDetalhesCesto.isEmpty()) {
-            mensagemNaTela("Nao ha produtos na lista", Color.RED);
-            throw new NegocioException("Nao ha produtos na lista");
+    // Calcula o valor do desconto
+    private BigDecimal desconto() {
+        BigDecimal desconto = BigDecimal.ZERO;
+        if(dashboard.getCheckBoxVendaDesconto().isSelected()) {
+            desconto = validacaoDaPrecoSeENumero(this.dashboard.getTxtVendaDesconto().getText());
         }
-
-        validacaoDoCampo(valoPagoString, "valor pago");
-        validacaoDoCampo(idClienteString, "buscar cliente");
-
-        if(valorPago.doubleValue() >= totalDaVenda.doubleValue()) {
-            try {
-                Long idCliente = Long.valueOf(idClienteString);
-                System.out.println("ID: " + idCliente);
-                cliente = clienteDao.buscarClientePeloId(idCliente);
-
-                if (cliente == null) {
-                    mensagemNaTela(String.format("Cliente com id %d nao existe. Insira o nome do cliente para registar", idCliente), Color.RED);
-                    throw new NegocioException("Cliente com id nao existe");
-                }
-            } catch (NumberFormatException e) {
-                cliente.setId(0L);
-                cliente.setNome(idClienteString);
-                System.out.println(cliente);
-                clienteDao.salvar(cliente);
-                cliente = clienteDao.buscarUltimoCliente();
-            }
-
-            troco = valorPago.subtract(totalDaVenda);
-
-            Venda venda = new Venda(id, cliente, usuarioLogado(), totalDaVenda, valorPago, troco, descontoTotal, LocalDateTime.now(), LocalDateTime.now(), vendaDetalhesCesto);
-            System.out.println(venda);
-            String mensagem = vendaDao.salvar(venda);
-
-            if(mensagem.startsWith("Venda")) {
-                this.dashboard.getLabelVendaValorPago().setText(valorPago.toString());
-                this.dashboard.getLabelVendaTroco().setText(troco.toString());
-                mensagemNaTela(mensagem, Color.GREEN);
-                actualizarTabelaVenda();
-                this.dashboard.getLabelHomeCliente().setText(String.format("%d", clienteDao.todosCliente().size()));
-                limparCampo();
-            } else {
-                mensagemNaTela(mensagem, Color.RED);
-            }
-        }else {
-            mensagemNaTela("Valor pago nao pode ser menor que o total da venda", Color.RED);
-        }
-
+        return desconto;
     }
 
-    private void actualizarTabelaVenda() {
-        List<Venda> vendas = vendaDao.todosVendas();
-        this.vendaTableModel = new VendaTableModel(vendas);
-        this.dashboard.getTabelaVenda().setModel(vendaTableModel);
-        this.dashboard.getLabelHomeVenda().setText(String.format("%d", vendas.size()));
+    // Remove um produto do cesto de compras
+    private void removerProdutoNoCesto() {
+        String produtoSelecionado = this.dashboard.getTxtVendaProdutoRemover().getText();
+        validacaoDoCampo(produtoSelecionado, "Produto a ser removido");
+
+        vendaDetalhesCesto.remove(produtoSelecionado); // Remove o produto do cesto
+        actualizarCesto(vendaDetalhesCesto); // Atualiza a exibição do cesto
     }
 
-    private void cancelar() {
-        limparCampo();
-        this.dashboard.getDialogVenda().setVisible(false);
-    }
-
+    // Exibe os detalhes da venda, incluindo o total e as informações do cliente
     private void detalhes() {
-        if(this.vendaDetalhes != null) {
-            StringBuilder produtoDaVenda = new StringBuilder();
+        BigDecimal total = vendaDetalhesCesto.values().stream().map(VendaDetalhes::getValorDaCompra).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            vendaDetalhes.stream().forEach(v -> {
-                produtoDaVenda.append(String.format("%s - ", v.getProduto().getNome()));
-                produtoDaVenda.append(String.format("%f - ", v.getProduto().getPreco().setScale(2, RoundingMode.DOWN)));
-                produtoDaVenda.append(String.format("%d - ", v.getQuantidade()));
-                produtoDaVenda.append(String.format("%f - ", v.getDesconto().setScale(2, RoundingMode.DOWN)));
-                produtoDaVenda.append(String.format("%f  ", v.getTotal().setScale(2, RoundingMode.DOWN)));
-                produtoDaVenda.append("\n");
-            });
+        Optional<Cliente> clienteTemp = clienteDao.buscarClientePorNome(dashboard.getTxtVendaCliente().getText());
+        clienteTemp.ifPresentOrElse(
+                c -> dashboard.getLabelVendaClienteId().setText(c.getId().toString()),
+                () -> mensagemNaTela("Cliente nao encontrado", Color.RED)
+        );
 
-            JOptionPane.showMessageDialog(dashboard,
-                    String.format("Detalhes da venda com id: %d \n\n"
-                                    + "__________________________________________\n"
-                                    + "Nome do cliente: %s \n"
-                                    + "Total da venda: %s \n"
-                                    + "Data da venda: %s \n"
-                                    + "Vendido por: %s \n"
-                                    + "__________________________________________\n"
-                                    + "Produto - Preco - Quantidade - Desconto - Total \n"
-                                    + "__________________________________________\n"
-                                    + "%s",
-                            this.vendaDetalhes.get(0).getVenda().getId(),
-                            this.vendaDetalhes.get(0).getVenda().getCliente().getNome(),
-                            this.vendaDetalhes.get(0).getVenda().getTotalVenda(),
-                            this.vendaDetalhes.get(0).getVenda().getDataHoraCriacao(),
-                            this.vendaDetalhes.get(0).getVenda().getUsuario().getNome(),
-                            produtoDaVenda.toString()
-                    )
-            );
-        }else {
-            JOptionPane.showMessageDialog(dashboard, "Seleciona um elemento na tabela", "Sem venda selecionada", 0);
+        dashboard.getLabelVendaValorTotal().setText(total.toString());
+    }
+
+    // Atualiza o cesto de compras exibido na interface
+    private void actualizarCesto(HashMap<String, VendaDetalhes> cesto) {
+        vendaRegistroTableModel = new VendaRegistroTableModel(cesto.values().stream().collect(Collectors.toList()));
+        this.dashboard.getVendaTabela().setModel(vendaRegistroTableModel);
+        this.dashboard.getVendaTabela().repaint();
+    }
+
+    // Atualiza a tabela de vendas com os registros atuais
+    private void actualizarTabelaVenda() {
+        vendaTableModel = new VendaTableModel(vendaDao.todos());
+        dashboard.getVendaTabelaPrincipal().setModel(vendaTableModel);
+        dashboard.getVendaTabelaPrincipal().repaint();
+    }
+
+    // Realiza a venda, salvando os dados no banco
+    private void vender() {
+        try {
+            String cliente = dashboard.getTxtVendaCliente().getText();
+            validacaoDoCampo(cliente, "Cliente");
+
+            Venda venda = new Venda();
+            venda.setCliente(clienteDao.buscarClientePorNome(cliente).orElseThrow(() -> new NegocioException("Cliente nao encontrado")));
+            venda.setUsuario(usuarioDao.buscarPorNome(dashboard.getLabelNomeDoUsuario().getText()).orElseThrow(() -> new NegocioException("Usuario nao encontrado")));
+            venda.setData(LocalDateTime.now());
+            venda.setDetalhes(new ArrayList<>(vendaDetalhesCesto.values()));
+
+            BigDecimal total = vendaDetalhesCesto.values().stream().map(VendaDetalhes::getValorDaCompra).reduce(BigDecimal.ZERO, BigDecimal::add);
+            venda.setValorTotal(total);
+
+            vendaDao.salvar(venda); // Salva a venda no banco
+            mensagemNaTela("Venda realizada com sucesso!", Color.GREEN);
+
+            actualizarTabelaVenda(); // Atualiza a tabela de vendas
+            cancelar(); // Limpa os campos e o cesto
+        } catch (NegocioException ex) {
+            mensagemNaTela(ex.getMessage(), Color.RED);
         }
     }
 
-    private void limparCampo() {
-        this.dashboard.getTxtVendaQuantidade().setValue(1);
-        this.dashboard.getTxtVendaDesconto().setText("1");
-        this.dashboard.getTxtVendaValorPago().setText("");
-        this.dashboard.getTxtVendaPesquisarProduto().setText("");
-        this.dashboard.getTxtVendaId().setText("0");
+    // Cancela a venda atual e limpa o cesto
+    private void cancelar() {
+        vendaDetalhesCesto.clear(); // Limpa o cesto de compras
+        actualizarCesto(vendaDetalhesCesto);
+        limparCampos();
+    }
+
+    // Limpa os campos da interface
+    private void limparCampos() {
         this.dashboard.getTxtVendaCliente().setText("");
-        this.vendaDetalhesCesto = new HashMap<>();
-        this.produto = null;
+        this.dashboard.getTxtVendaPesquisarProduto().setText("");
+        this.dashboard.getTxtVendaQuantidadeDoProduto().setText("");
+        this.dashboard.getTxtVendaProdutoRemover().setText("");
+        this.dashboard.getTxtVendaDesconto().setText("");
+        informacaoPadraoDaLabelVendaProduto();
+        this.dashboard.getLabelVendaValorTotal().setText("0,00");
     }
 }
