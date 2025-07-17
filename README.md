@@ -35,7 +35,7 @@ O projeto é dividido em vários pacotes, cada um contendo classes relacionadas 
 - mvn install
 
 - mvn exec:java -Dexec.mainClass="infosystema_informatica.gestao.vendas.Main"
-
+```
 src/
 ├── main/
 │   ├── java/
@@ -55,8 +55,8 @@ src/
 │       └── application.properties          # Arquivo de configuração do banco de dados
 └── test/
     └── java/                               # Contém os testes unitários do projeto
+```
 
 
-Este exemplo de `README.md` cobre os principais aspectos do projeto, incluindo uma visão geral das funcionalidades, estrutura do projeto, configuração, uso, e como contribuir. Ajuste as informações conforme necessário para refletir as especificidades do seu projeto.
 
 
